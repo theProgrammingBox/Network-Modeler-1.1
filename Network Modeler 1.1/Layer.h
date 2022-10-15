@@ -11,6 +11,7 @@ public:
 	virtual void printParams() = 0;
 	virtual void initParams(vector<int>* inputDimensions, vector<int>* outputDimensions) = 0;
 	Matrix* getOutput() const { return output; };
+	virtual Matrix* forward(Matrix* input) = 0;
 
 protected:
 	Matrix* output;

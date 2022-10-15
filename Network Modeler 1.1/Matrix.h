@@ -10,8 +10,12 @@ public:
 	void randomize();
 	void printOverview();
 	void printParams(int dimension = 0, int index = 0);
-
+	
 	vector<int>* getDimensions() const;
+
+	// *, + opperators
+	Matrix operator + (const Matrix& matrix) const;
+	Matrix operator * (const Matrix& matrix) const;
 
 private:
 	vector<int>* dimensions;
@@ -83,4 +87,42 @@ void Matrix::printParams(int dimension, int index)
 vector<int>* Matrix::getDimensions() const
 {
 	return this->dimensions;
+}
+
+Matrix Matrix::operator + (const Matrix& matrix) const
+{
+	assert(this->dimensions->size() == matrix.dimensions->size());
+	for (int i = 0; i < this->dimensions->size(); i++)
+	{
+		assert(this->dimensions->at(i) == matrix.dimensions->at(i));
+	}
+
+	Matrix result(this->dimensions);
+	for (int i = 0; i < this->totalSize; i++)
+	{
+		result.values[i] = this->values[i] + matrix.values[i];
+	}
+	return result;
+}
+
+Matrix Matrix::operator * (const Matrix& matrix) const
+{
+	assert(this->dimensions->size() == 2);
+	assert(matrix.dimensions->size() == 2);
+	assert(this->dimensions->at(1) == matrix.dimensions->at(0));
+
+	Matrix result(new vector<int>{ this->dimensions->at(0), matrix.dimensions->at(1) });
+	for (int i = 0; i < this->dimensions->at(0); i++)
+	{
+		for (int j = 0; j < matrix.dimensions->at(1); j++)
+		{
+			float sum = 0;
+			for (int k = 0; k < this->dimensions->at(1); k++)
+			{
+				sum += this->values[i * this->dimensions->at(1) + k] * matrix.values[k * matrix.dimensions->at(1) + j];
+			}
+			result.values[i * matrix.dimensions->at(1) + j] = sum;
+		}
+	}
+	return result;
 }

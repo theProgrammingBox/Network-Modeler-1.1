@@ -12,6 +12,7 @@ public:
 	void addInput(Matrix* input);
 	void addLayer(Layer* layer);
 	Matrix* getOutput() const;
+	void forward();
 	
 private:
 	Matrix* input;
@@ -60,4 +61,13 @@ void NetworkModeler::addLayer(Layer* layer)
 Matrix* NetworkModeler::getOutput() const
 {
 	return layers[layers.size() - 1]->getOutput();
+}
+
+void NetworkModeler::forward()
+{
+	layers[0]->forward(input);
+	for (int i = 1; i < layers.size(); i++)
+	{
+		layers[i]->forward(layers[i - 1]->getOutput());
+	}
 }
