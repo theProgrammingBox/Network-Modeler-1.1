@@ -2,22 +2,14 @@
 #include "LinearLayer.h"
 
 int main() {
-	/*Matrix* matrix = new Matrix(new vector<int>{ 2, 3, 4 });
-	matrix->randomize();
-	matrix->printOverview();
-	cout << endl;
-	matrix->printParams();*/
-
-	/*LinearLayer layer{ new Matrix(new vector<int>{ 1, 4 }) };
-	layer.printOverview();
-	cout << endl;
-	layer.printParams();*/
-
+	Matrix* input = new Matrix(new vector<int>{ 1, 2 });
 	NetworkModeler networkModeler;
-	networkModeler.addInput(new Matrix(new vector<int>{ 1, 2 }));
+	networkModeler.addInput(input);
 	networkModeler.addLayer(new LinearLayer(new Matrix(new vector<int>{ 1, 4 })));
+	networkModeler.addLayer(new LinearLayer(new Matrix(new vector<int>{ 1, 1 })));
+	Matrix* output = networkModeler.getOutput();
+	
 	networkModeler.printOverview();
-	cout << endl;
 	networkModeler.printParams();
 
 	return 0;

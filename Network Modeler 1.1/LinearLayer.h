@@ -10,7 +10,6 @@ public:
 	void printOverview() override;
 	void printParams() override;
 	void initParams(vector<int>* inputDimensions, vector<int>* outputDimensions) override;
-	//Matrix* getOutput() const { return output; };
 	
 private:
 	Matrix* weights;
@@ -36,16 +35,18 @@ void LinearLayer::printParams()
 	weights->printOverview();
 	cout << endl;
 	weights->printParams();
+	cout << endl;
 	cout << "Biases: ";
 	biases->printOverview();
 	cout << endl;
 	biases->printParams();
+	cout << endl;
 }
 
 void LinearLayer::initParams(vector<int>* inputDimensions, vector<int>* outputDimensions)
 {
-	assert(inputDimensions->size() <= 2);
-	assert(outputDimensions->size() <= 2);
+	assert(inputDimensions->size() == 2);
+	assert(outputDimensions->size() == 2);
 	weights = new Matrix(new vector<int>{ inputDimensions->at(1), output->getDimensions()->at(1), inputDimensions->at(0), output->getDimensions()->at(0) });
 	weights->randomize();
 	biases = new Matrix(output->getDimensions());
