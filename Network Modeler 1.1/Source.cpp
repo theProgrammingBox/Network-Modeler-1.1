@@ -13,6 +13,7 @@ struct Matrix1D
 	Matrix1D& operator=(const Matrix1D& matrix) { elements = matrix.elements; delete[] data; data = new T[elements]; memcpy(data, matrix.data, elements * sizeof(T)); return *this; }
 	T& operator[](int index) { return data[index]; }
 	const T& operator[](int index) const { return data[index]; }
+	T dot(const Matrix1D& matrix) const { T result = 0; for (int i = 0; i < elements; i++) result += data[i] * matrix.data[i]; return result; }
 	Matrix1D& operator+=(const Matrix1D& matrix) { for (int i = 0; i < elements; i++) data[i] += matrix.data[i]; return *this; }
 	Matrix1D& operator-=(const Matrix1D& matrix) { for (int i = 0; i < elements; i++) data[i] -= matrix.data[i]; return *this; }
 	Matrix1D& operator*=(const Matrix1D& matrix) { for (int i = 0; i < elements; i++) data[i] *= matrix.data[i]; return *this; }
@@ -36,6 +37,7 @@ struct Matrix1D
 	void save(const string& fileName) const { ofstream file(fileName, ios::binary); save(file); file.close(); }
 	void save(ofstream& file) const { file.write((char*)&elements, sizeof(int)); file.write((char*)data, elements * sizeof(T)); }
 	void randomize() { for (int i = 0; i < elements; i++) data[i] = random.normalRand(); }
+	void zero() { memset(data, 0, elements * sizeof(T)); }
 };
 
 int main()
@@ -48,6 +50,9 @@ int main()
 	cout << matrix2 << endl;
 	Matrix1D<float> matrix3 = matrix + matrix2;
 	cout << matrix3 << endl;
+
+	float value = matrix.dot(matrix2);
+	cout << value << endl;
 
 	return 0;
 }

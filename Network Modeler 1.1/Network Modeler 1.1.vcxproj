@@ -127,15 +127,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Header.h" />
     <ClInclude Include="Layer.h" />
     <ClInclude Include="LinearLayer.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="NetworkModeler.h" />
     <ClInclude Include="Randoms.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
