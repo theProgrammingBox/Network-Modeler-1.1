@@ -30,6 +30,7 @@ struct Matrix1D
 
 	void randomize() { for (int i = 0; i < elements; i++) data[i] = random.normalRand(); }
 	void zero() { memset(data, 0, elements * sizeof(T)); }
+	Matrix2D<T> outerProduct(const Matrix1D& matrix) const { Matrix2D<T> result(elements, matrix.elements); for (int i = 0; i < elements; i++) for (int j = 0; j < matrix.elements; j++) result(i, j) = data[i] * matrix.data[j]; return result; }
 };
 
 template <typename T>
@@ -91,17 +92,20 @@ int main()
 		weightsGradient.zero();
 		biasesGradient.zero();
 		
-		for (int i = 0; i < outputSize; i++)
+		/*for (int i = 0; i < outputSize; i++)
 		{
 			for (int j = 0; j < inputSize; j++)
 			{
 				weightsGradient(i, j) = outputGradient[i] * input[j];
 			}
 			biasesGradient[i] = outputGradient[i];
-		}
+		}*/
 
-		weights += weightsGradient * 0.01;
-		biases += biasesGradient * 0.01;
+		weightsGradient = outputGradient.outerProduct(input);
+		biasesGradient = outputGradient;
+
+		weights += weightsGradient * 0.1;
+		biases += biasesGradient * 0.1;
 
 		/*cout << "input: " << input << "\n\n";
 		cout << "weights: " << weights << "\n\n";

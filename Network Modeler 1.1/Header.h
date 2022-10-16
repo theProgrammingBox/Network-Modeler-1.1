@@ -17,3 +17,8 @@ using std::ifstream;
 using std::ios;
 
 static Random random;
+
+template <typename T>
+struct Matrix1D;
+template <typename T>
+struct Matrix2D;
