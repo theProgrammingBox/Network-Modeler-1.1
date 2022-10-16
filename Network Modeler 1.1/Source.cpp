@@ -47,7 +47,6 @@ struct Matrix2D
 	Matrix1D<T> operator[](int element) const { Matrix1D<T> result(features); for (int i = 0; i < features; i++) result.data[i] = data[element * features + i]; return result; }
 	
 	Matrix1D<T> operator*(const Matrix1D<T>& matrix) const { Matrix1D<T> result(elements); for (int i = 0; i < elements; i++) result.data[i] = (*this)[i] * matrix; return result; }
-	Matrix2D operator+(const Matrix2D& matrix) const { Matrix2D result(elements, features); for (int i = 0; i < size; i++) result.data[i] = data[i] + matrix.data[i]; return result; }
 	
 	const string str() const { string result = "["; for (int i = 0; i < elements; i++) result += (*this)[i].str() + (i < elements - 1 ? ",\n" : "]"); return result; }
 	friend ostream& operator<<(ostream& os, const Matrix2D& matrix) { os << matrix.str(); return os; }
@@ -76,11 +75,6 @@ int main()
 	Matrix2D<float> matrix4(10, 10);
 	matrix4.randomize();
 	cout << matrix4 << "\n\n";
-	Matrix2D<float> matrix5(10, 10);
-	matrix5.randomize();
-	cout << matrix5 << "\n\n";
-	Matrix2D<float> matrix6 = matrix4 + matrix5;
-	cout << matrix6 << "\n\n";
 	
 	Matrix1D<float> matrix7 = matrix4 * matrix;
 	cout << matrix7 << "\n\n";
