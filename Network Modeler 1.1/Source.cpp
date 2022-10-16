@@ -60,24 +60,24 @@ struct Matrix2D
 
 int main()
 {
-	Matrix1D<float> matrix(10);
-	matrix.randomize();
-	cout << matrix << "\n\n";
-	Matrix1D<float> matrix2(10);
-	matrix2.randomize();
-	cout << matrix2 << "\n\n";
-	Matrix1D<float> matrix3 = matrix + matrix2;
-	cout << matrix3 << "\n\n";
-
-	float value = matrix * matrix2;
-	cout << value << "\n\n";
-
-	Matrix2D<float> matrix4(10, 10);
-	matrix4.randomize();
-	cout << matrix4 << "\n\n";
+	int inputSize = 2;
+	int outputSize = 1;
 	
-	Matrix1D<float> matrix7 = matrix4 * matrix;
-	cout << matrix7 << "\n\n";
+	Matrix1D<float> input(inputSize);
+	Matrix1D<float> output(outputSize);
+	Matrix2D<float> weights(outputSize, inputSize);
+	Matrix1D<float> biases(outputSize);
+
+	weights.randomize();
+	biases.randomize();
+	input.randomize();
+
+	output = weights * input + biases;
+	
+	cout << "input: " << input << "\n\n";
+	cout << "weights: " << weights << "\n\n";
+	cout << "biases: " << biases << "\n\n";
+	cout << "output: " << output << "\n\n";
 
 	return 0;
 }
