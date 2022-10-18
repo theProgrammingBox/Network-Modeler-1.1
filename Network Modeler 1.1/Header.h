@@ -8,6 +8,7 @@
 
 using std::cout;
 using std::endl;
+using std::swap;
 using std::vector;
 using std::string;
 using std::to_string;
@@ -18,7 +19,3 @@ using std::ios;
 
 static Random random;
 
-template <typename T>
-struct Matrix1D;
-template <typename T>
-struct Matrix2D;

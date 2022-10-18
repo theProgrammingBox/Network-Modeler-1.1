@@ -1,122 +1,123 @@
-#include "NetworkModeler.h"
 #include "LinearLayer.h"
-
-template <typename T>
-struct Matrix1D
-{
-	uint32_t elements;
-	T* data;
-
-	Matrix1D() : elements(0), data(nullptr) {}
-	Matrix1D(uint32_t elements) : elements(elements), data(new T[elements]) {}
-	Matrix1D(const Matrix1D& matrix) : elements(matrix.elements), data(new T[elements]) { memcpy(data, matrix.data, elements * sizeof(T)); }
-	~Matrix1D() { delete[] data; }
-
-	Matrix1D& operator=(const Matrix1D& matrix) { elements = matrix.elements; delete[] data; data = new T[elements]; memcpy(data, matrix.data, elements * sizeof(T)); return *this; }
-	T& operator[](int index) { return data[index]; }
-	const T& operator[](int index) const { return data[index]; }
-
-	T operator*(const Matrix1D& matrix) const { T result = 0; for (int i = 0; i < elements; i++) result += data[i] * matrix.data[i]; return result; }
-	Matrix1D operator+(const Matrix1D& matrix) const { Matrix1D result(elements); for (int i = 0; i < elements; i++) result.data[i] = data[i] + matrix.data[i]; return result; }
-	Matrix1D operator-(const Matrix1D& matrix) const { Matrix1D result(elements); for (int i = 0; i < elements; i++) result.data[i] = data[i] - matrix.data[i]; return result; }
-	Matrix1D& operator+=(const Matrix1D& matrix) { for (int i = 0; i < elements; i++) data[i] += matrix.data[i]; return *this; }
-	Matrix1D operator*(const T& scalar) const { Matrix1D result(elements); for (int i = 0; i < elements; i++) result.data[i] = data[i] * scalar; return result; }
-
-	const string str() const { string result = "["; for (int i = 0; i < elements; i++) result += to_string(data[i]) + (i < elements - 1 ? ", " : "]");; return result; }
-	friend ostream& operator<<(ostream& os, const Matrix1D& matrix) { os << matrix.str(); return os; }
-
-	void save(const string& fileName) const { ofstream file(fileName, ios::binary); save(file); file.close(); }
-	void save(ofstream& file) const { file.write((char*)&elements, sizeof(int)); file.write((char*)data, elements * sizeof(T)); }
-
-	void randomize() { for (int i = 0; i < elements; i++) data[i] = random.normalRand(); }
-	void zero() { memset(data, 0, elements * sizeof(T)); }
-	Matrix2D<T> outerProduct(const Matrix1D& matrix) const { Matrix2D<T> result(elements, matrix.elements); for (int i = 0; i < elements; i++) for (int j = 0; j < matrix.elements; j++) result(i, j) = data[i] * matrix.data[j]; return result; }
-};
-
-template <typename T>
-struct Matrix2D
-{
-	uint32_t elements, features, size;
-	T* data;
-
-	Matrix2D() : elements(0), features(0), size(0), data(nullptr) {}
-	Matrix2D(uint32_t elements, uint32_t features) : elements(elements), features(features), size(elements* features), data(new T[size]) {}
-	Matrix2D(const Matrix2D& matrix) : elements(matrix.elements), features(matrix.features), size(matrix.size), data(new T[size]) { memcpy(data, matrix.data, size * sizeof(T)); }
-	~Matrix2D() { delete[] data; }
-
-	Matrix2D& operator=(const Matrix2D& matrix) { elements = matrix.elements; features = matrix.features; size = matrix.size; delete[] data; data = new T[size]; memcpy(data, matrix.data, size * sizeof(T)); return *this; }
-	T& operator()(int element, int feature) { return data[element * features + feature]; }
-	const T& operator()(int element, int feature) const { return data[element * features + feature]; }
-
-	Matrix1D<T> operator[](int element) const { Matrix1D<T> result(features); for (int i = 0; i < features; i++) result.data[i] = data[element * features + i]; return result; }
-
-	Matrix1D<T> operator*(const Matrix1D<T>& matrix) const { Matrix1D<T> result(elements); for (int i = 0; i < elements; i++) result.data[i] = (*this)[i] * matrix; return result; }
-	Matrix2D& operator+=(const Matrix2D& matrix) { for (int i = 0; i < size; i++) data[i] += matrix.data[i]; return *this; }
-	Matrix2D operator*(const T& scalar) const { Matrix2D result(elements, features); for (int i = 0; i < size; i++) result.data[i] = data[i] * scalar; return result; }
-	
-	const string str() const { string result = "["; for (int i = 0; i < elements; i++) result += (*this)[i].str() + (i < elements - 1 ? ",\n" : "]"); return result; }
-	friend ostream& operator<<(ostream& os, const Matrix2D& matrix) { os << matrix.str(); return os; }
-
-	void save(const string& fileName) const { ofstream file(fileName, ios::binary); save(file); file.close(); }
-	void save(ofstream& file) const { file.write((char*)&elements, sizeof(int)); file.write((char*)&features, sizeof(int)); file.write((char*)data, size * sizeof(T)); }
-
-	void randomize() { for (int i = 0; i < size; i++) data[i] = random.normalRand(); }
-	void zero() { memset(data, 0, size * sizeof(T)); }
-};
 
 int main()
 {
-	int inputSize = 2;
-	int outputSize = 2;
+	int inputs = 2;
+	int outputs = 3;
+	LinearLayer<float> layer(outputs);
+	layer.Init(inputs);
 
-	Matrix1D<float> input(inputSize);
-	Matrix1D<float> expected(inputSize);
-	Matrix1D<float> output(outputSize);
-	Matrix2D<float> weights(outputSize, inputSize);
-	Matrix1D<float> biases(outputSize);
+	Matrix<float> input(1, inputs);
+	Matrix<float> inputGradient(1, inputs);
 
-	weights.randomize();
-	biases.randomize();
-
-	Matrix1D<float> outputGradient(outputSize);
-	Matrix2D<float> weightsGradient(outputSize, inputSize);
-	Matrix1D<float> biasesGradient(outputSize);
-
-	while (true)
+	int iter = 100;
+	while (iter--)
 	{
-		input.randomize();
-		expected = input;
+		input.fillRandom();
 
-		output = weights * input + biases;
-		outputGradient = expected - output;
-		weightsGradient.zero();
-		biasesGradient.zero();
-		
-		/*for (int i = 0; i < outputSize; i++)
+		layer.Forward(input);
+
+		Matrix<float> expected(1, 3);
+		for (int i = 0; i < outputs; i++)
 		{
-			for (int j = 0; j < inputSize; j++)
-			{
-				weightsGradient(i, j) = outputGradient[i] * input[j];
-			}
-			biasesGradient[i] = outputGradient[i];
-		}*/
-
-		weightsGradient = outputGradient.outerProduct(input);
-		biasesGradient = outputGradient;
-
-		weights += weightsGradient * 0.1;
-		biases += biasesGradient * 0.1;
-
-		/*cout << "input: " << input << "\n\n";
-		cout << "weights: " << weights << "\n\n";
-		cout << "biases: " << biases << "\n\n";
-		cout << "output: " << output << "\n\n";
-
-		cout << "expected: " << expected << "\n\n";*/
-		cout << "outputGradient: " << outputGradient << "\n\n";
-
-		//getchar();
+			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
+		}
+		layer.outputGradient = expected - layer.output;
+		layer.Backward(input, inputGradient);
+		layer.Update(0.1f);
 	}
+	
+	//int inputs = 2;
+	//int outputs = 3;
+	//int batchSize = 100;
+	//float invBatchSize = 1.0f / batchSize;
+	//float learningRate = 0.1f;
+
+	//Matrix<float> input(1, inputs);
+	//Matrix<float> weights(inputs, outputs);
+	//Matrix<float> bias(1, outputs);
+	//Matrix<float> output(1, outputs);
+	//Matrix<float> outputActivated(1, outputs);
+
+	//auto nothing = [](float x) { return x; };
+	//auto nothingGradient = [](float x, float y) { return y; };
+	//auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
+	//auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
+	//auto relu = [](float x) { return x * (x > 0.0f); };
+	//auto reluGradient = [](float x, float y) { return y * (x > 0.0f); };
+
+	//auto activation = leakyRelu;
+	//auto activationGradient = leakyReluGradient;
+
+	//weights.fillRandom();
+	//bias.fillRandom();
+
+	//Matrix<float> expected(1, outputs);
+	//Matrix<float> outputActivatedGradient(1, outputs);
+	//Matrix<float> outputGradient(1, outputs);
+	//Matrix<float> weightsGradient(inputs, outputs);
+
+	//int iter = 200;
+	//while (iter--)
+	//{
+	//	outputGradient.fill(0.0f);
+	//	weightsGradient.fill(0.0f);
+	//	for (int i = 0; i < batchSize; i++)
+	//	{
+	//		input.fillRandom();
+	//		output = input * weights + bias;
+	//		outputActivated = output;
+	//		outputActivated.apply(activation);
+
+	//		for (int i = 0; i < outputs; i++)
+	//		{
+	//			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
+	//		}
+	//		expected.apply(activation);
+
+	//		/*
+	//		-0.3, -0.1, 0.1
+	//		1.6, 0.2, -1.2
+	//		-0.3, 0.7, 1.7
+	//		*/
+
+	//		outputActivatedGradient = expected - outputActivated;
+	//		outputGradient.addOn(activationGradient, output, outputActivatedGradient);
+
+	//		input.transpose();
+	//		weightsGradient += input * outputGradient;
+	//		input.transpose();
+
+	//		/*cout << "input:\n";
+	//		input.print();
+	//		cout << "weights:\n";
+	//		weights.print();
+	//		cout << "bias:\n";
+	//		bias.print();
+	//		cout << "output:\n";
+	//		output.print();*/
+	//		/*cout << "outputActivated:\n";
+	//		outputActivated.print();
+	//		cout << "expected:\n";
+	//		expected.print();*/
+	//		/*cout << "outputActivatedGradient:\n";
+	//		outputActivatedGradient.print();*/
+	//	}
+	//	weightsGradient *= invBatchSize * learningRate;
+	//	weights += weightsGradient;
+	//	outputGradient *= invBatchSize * learningRate;
+	//	bias += outputGradient;
+
+	//	/*cout << "outputGradient:\n";
+	//	outputGradient.print();
+	//	cout << "weightsGradient:\n";
+	//	weightsGradient.print();*/
+	//}
+
+	//cout << "weights:\n";
+	//weights.print();
+	//cout << "bias:\n";
+	//bias.print();
 
 	return 0;
 }

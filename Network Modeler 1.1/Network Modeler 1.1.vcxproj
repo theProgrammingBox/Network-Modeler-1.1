@@ -128,7 +128,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Header.h" />
-    <ClInclude Include="Layer.h" />
     <ClInclude Include="LinearLayer.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="NetworkModeler.h" />

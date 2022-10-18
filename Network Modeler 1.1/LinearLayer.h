@@ -1,73 +1,103 @@
 #pragma once
-#include "Layer.h"
+#include "Matrix.h"
 
-class LinearLayer : public Layer
+template <typename T>
+class LinearLayer
 {
 public:
-	LinearLayer(Matrix* output) : Layer(output) {};
+	LinearLayer(uint32_t outputs);
 	~LinearLayer();
+
+	void Init(uint32_t inputs);
+	void Forward(Matrix<T>& input);
+	void Backward(Matrix<T>& input, Matrix<T>& inputGradient);
+	void Update(T scalar);
+	void Save(ofstream& file);
+	void Load(ifstream& file);
+
+	Matrix<T> weights;
+	Matrix<T> weightsGradient;
+	Matrix<T> bias;
+	Matrix<T> output;
+	Matrix<T> outputGradient;
 	
-	void printOverview() override;
-	void printParams() override;
-	void initParams(vector<int>* inputDimensions, vector<int>* outputDimensions) override;
-	Matrix* forward(Matrix* input) override;
-	
-private:
-	Matrix* weights;
-	Matrix* biases;
+	uint32_t outputs;
 };
 
-LinearLayer::~LinearLayer()
+template <typename T>
+LinearLayer<T>::LinearLayer(uint32_t outputs)
 {
-	delete weights;
-	delete biases;
+	this->outputs = outputs;
 }
 
-void LinearLayer::printOverview()
+template <typename T>
+LinearLayer<T>::~LinearLayer()
 {
-	cout << "Linear layer with a ";
-	output->printOverview();
-	cout << "output" << endl;
 }
 
-void LinearLayer::printParams()
+template <typename T>
+void LinearLayer<T>::Init(uint32_t inputs)
 {
-	cout << "Weights: ";
-	weights->printOverview();
-	cout << endl;
-	weights->printParams();
-	cout << endl;
-	cout << "Biases: ";
-	biases->printOverview();
-	cout << endl;
-	biases->printParams();
-	cout << endl;
+	weights = Matrix<T>(inputs, outputs);
+	weightsGradient = Matrix<T>(inputs, outputs);
+	bias = Matrix<T>(1, outputs);
+	output = Matrix<T>(1, outputs);
+	outputGradient = Matrix<T>(1, outputs);
+	weights.fillRandom();
+	weightsGradient.fill(0.0f);
+	bias.fillRandom();
+	outputGradient.fill(0.0f);
 }
 
-void LinearLayer::initParams(vector<int>* inputDimensions, vector<int>* outputDimensions)
+template <typename T>
+void LinearLayer<T>::Forward(Matrix<T>& input)
 {
-	assert(inputDimensions->size() == 2);
-	assert(outputDimensions->size() == 2);
+	output = input * weights + bias;
+}
+
+template <typename T>
+void LinearLayer<T>::Backward(Matrix<T>& input, Matrix<T>& inputGradient)
+{
+	input.transpose();
+	weightsGradient += input * outputGradient;
+	input.transpose();
+	weightsGradient.transpose();
+	inputGradient += outputGradient * weightsGradient;
+	weightsGradient.transpose();
+}
+
+template <typename T>
+void LinearLayer<T>::Update(T scalar)
+{
+	weightsGradient *= scalar;
+	weights += weightsGradient;
 	
-	weights = new Matrix(new vector<int>{ inputDimensions->at(1), output->getDimensions()->at(1), inputDimensions->at(0), output->getDimensions()->at(0) });
-	weights->randomize();
-	biases = new Matrix(output->getDimensions());
-	biases->randomize();
+	outputGradient *= scalar;
+	bias += outputGradient;
+
+	float error = 0.0f;
+	for (int i = 0; i < outputs; i++)
+	{
+		error += fabs(outputGradient(0, i));
+	}
+	cout << "Error: " << error << endl;
+	
+	weightsGradient.fill(0.0f);
+	outputGradient.fill(0.0f);
+
+	
 }
 
-Matrix* LinearLayer::forward(Matrix* input)
+template <typename T>
+void LinearLayer<T>::Save(ofstream& file)
 {
-	assert(input->getDimensions()->size() == 2);
-	assert(input->getDimensions()->at(0) == weights->getDimensions()->at(2));
-	assert(input->getDimensions()->at(1) == weights->getDimensions()->at(0));
-	assert(output->getDimensions()->at(0) == weights->getDimensions()->at(3));
-	assert(output->getDimensions()->at(1) == weights->getDimensions()->at(1));
-	assert(output->getDimensions()->at(0) == biases->getDimensions()->at(0));
-	assert(output->getDimensions()->at(1) == biases->getDimensions()->at(1));
-	
-	//use matrix =, *, + opperators
-	//output = input * weights + biases
-	*output = *input * *weights + *biases;
+	weights.Save(file);
+	bias.Save(file);
+}
 
-	return output;
+template <typename T>
+void LinearLayer<T>::Load(ifstream& file)
+{
+	weights.Load(file);
+	bias.Load(file);
 }
