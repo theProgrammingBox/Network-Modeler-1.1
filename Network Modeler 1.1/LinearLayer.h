@@ -8,12 +8,12 @@ public:
 	LinearLayer(uint32_t outputs);
 	~LinearLayer();
 
-	void Init(uint32_t inputs);
-	void Forward(Matrix<T>& input);
-	void Backward(Matrix<T>& input, Matrix<T>& inputGradient);
-	void Update(T scalar);
-	void Save(ofstream& file);
-	void Load(ifstream& file);
+	void init(uint32_t inputs);
+	void forward(Matrix<T>& input);
+	void backward(Matrix<T>& input, Matrix<T>& inputGradient);
+	void update(T scalar);
+	void save(ofstream& file);
+	void load(ifstream& file);
 
 	Matrix<T> weights;
 	Matrix<T> weightsGradient;
@@ -36,7 +36,7 @@ LinearLayer<T>::~LinearLayer()
 }
 
 template <typename T>
-void LinearLayer<T>::Init(uint32_t inputs)
+void LinearLayer<T>::init(uint32_t inputs)
 {
 	weights = Matrix<T>(inputs, outputs);
 	weightsGradient = Matrix<T>(inputs, outputs);
@@ -50,13 +50,13 @@ void LinearLayer<T>::Init(uint32_t inputs)
 }
 
 template <typename T>
-void LinearLayer<T>::Forward(Matrix<T>& input)
+void LinearLayer<T>::forward(Matrix<T>& input)
 {
 	output = input * weights + bias;
 }
 
 template <typename T>
-void LinearLayer<T>::Backward(Matrix<T>& input, Matrix<T>& inputGradient)
+void LinearLayer<T>::backward(Matrix<T>& input, Matrix<T>& inputGradient)
 {
 	input.transpose();
 	weightsGradient += input * outputGradient;
@@ -67,7 +67,7 @@ void LinearLayer<T>::Backward(Matrix<T>& input, Matrix<T>& inputGradient)
 }
 
 template <typename T>
-void LinearLayer<T>::Update(T scalar)
+void LinearLayer<T>::update(T scalar)
 {
 	weightsGradient *= scalar;
 	weights += weightsGradient;
@@ -84,20 +84,18 @@ void LinearLayer<T>::Update(T scalar)
 	
 	weightsGradient.fill(0.0f);
 	outputGradient.fill(0.0f);
-
-	
 }
 
 template <typename T>
-void LinearLayer<T>::Save(ofstream& file)
+void LinearLayer<T>::save(ofstream& file)
 {
-	weights.Save(file);
-	bias.Save(file);
+	weights.save(file);
+	bias.save(file);
 }
 
 template <typename T>
-void LinearLayer<T>::Load(ifstream& file)
+void LinearLayer<T>::load(ifstream& file)
 {
-	weights.Load(file);
-	bias.Load(file);
+	weights.load(file);
+	bias.load(file);
 }

@@ -217,7 +217,6 @@ struct Matrix
 		file.write((char*)&cols, sizeof(uint32_t));
 		file.write((char*)&transposed, sizeof(bool));
 		file.write((char*)data, rows * cols * sizeof(T));
-		file.close();
 	}
 
 	void load(ifstream& file)
@@ -227,6 +226,5 @@ struct Matrix
 		file.read((char*)&transposed, sizeof(bool));
 		data = new T[rows * cols];
 		file.read((char*)data, rows * cols * sizeof(T));
-		file.close();
 	}
 };

@@ -18,4 +18,3 @@ using std::ifstream;
 using std::ios;
 
 static Random random;
-

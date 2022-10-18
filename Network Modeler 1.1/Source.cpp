@@ -5,7 +5,7 @@ int main()
 	int inputs = 2;
 	int outputs = 3;
 	LinearLayer<float> layer(outputs);
-	layer.Init(inputs);
+	layer.init(inputs);
 
 	Matrix<float> input(1, inputs);
 	Matrix<float> inputGradient(1, inputs);
@@ -14,8 +14,7 @@ int main()
 	while (iter--)
 	{
 		input.fillRandom();
-
-		layer.Forward(input);
+		layer.forward(input);
 
 		Matrix<float> expected(1, 3);
 		for (int i = 0; i < outputs; i++)
@@ -23,8 +22,37 @@ int main()
 			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
 		}
 		layer.outputGradient = expected - layer.output;
-		layer.Backward(input, inputGradient);
-		layer.Update(0.1f);
+		layer.backward(input, inputGradient);
+		layer.update(0.1f);
+	}
+
+	ofstream file("network.txt", ios::binary);
+	layer.save(file);
+	file.close();
+	
+	cout << endl;
+	
+	LinearLayer<float> layer2(outputs);
+	layer2.init(inputs);
+	
+	ifstream file2("network.txt", ios::binary);
+	layer2.load(file2);
+	file2.close();
+	
+	iter = 100;
+	while (iter--)
+	{
+		input.fillRandom();
+		layer2.forward(input);
+		
+		Matrix<float> expected(1, 3);
+		for (int i = 0; i < outputs; i++)
+		{
+			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
+		}
+		layer2.outputGradient = expected - layer2.output;
+		layer2.backward(input, inputGradient);
+		layer2.update(0.1f);
 	}
 	
 	//int inputs = 2;
