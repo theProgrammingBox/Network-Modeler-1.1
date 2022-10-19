@@ -6,27 +6,34 @@ int main()
 	int outputs = 3;
 	LinearLayer<float> layer(outputs);
 	layer.init(inputs);
+	
+	LinearLayer<float> layer2(outputs);
+	layer2.init(outputs);
 
 	Matrix<float> input(1, inputs);
 	Matrix<float> inputGradient(1, inputs);
 
-	int iter = 100;
+	int iter = 1000;
 	while (iter--)
 	{
 		input.fillRandom();
 		layer.forward(input);
+		layer2.forward(layer.output);
 
 		Matrix<float> expected(1, 3);
 		for (int i = 0; i < outputs; i++)
 		{
 			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
 		}
-		layer.outputGradient = expected - layer.output;
+		layer2.outputGradient = expected - layer2.output;
+		layer2.backward(layer.output, layer.outputGradient);
 		layer.backward(input, inputGradient);
 		layer.update(0.1f);
+		layer2.update(0.1f);
+		inputGradient.fill(0.0f);
 	}
 
-	ofstream file("network.txt", ios::binary);
+	/*ofstream file("network.txt", ios::binary);
 	layer.save(file);
 	file.close();
 	
@@ -53,7 +60,7 @@ int main()
 		layer2.outputGradient = expected - layer2.output;
 		layer2.backward(input, inputGradient);
 		layer2.update(0.1f);
-	}
+	}*/
 	
 	//int inputs = 2;
 	//int outputs = 3;

@@ -47,12 +47,20 @@ void LinearLayer<T>::init(uint32_t inputs)
 	weightsGradient.fill(0.0f);
 	bias.fillRandom();
 	outputGradient.fill(0.0f);
+	
+	/*cout << "weights: " << endl;
+	weights.print();
+	cout << "bias: " << endl;
+	bias.print();*/
 }
 
 template <typename T>
 void LinearLayer<T>::forward(Matrix<T>& input)
 {
 	output = input * weights + bias;
+	
+	/*cout << "output: " << endl;
+	output.print();*/
 }
 
 template <typename T>
@@ -61,26 +69,32 @@ void LinearLayer<T>::backward(Matrix<T>& input, Matrix<T>& inputGradient)
 	input.transpose();
 	weightsGradient += input * outputGradient;
 	input.transpose();
-	weightsGradient.transpose();
-	inputGradient += outputGradient * weightsGradient;
-	weightsGradient.transpose();
+	
+	weights.transpose();
+	inputGradient += outputGradient * weights;
+	weights.transpose();
+	
+	/*cout << "weightsGradient:" << endl;
+	weightsGradient.print();
+	cout << "inputGradient:" << endl;
+	inputGradient.print();*/
 }
 
 template <typename T>
 void LinearLayer<T>::update(T scalar)
 {
-	weightsGradient *= scalar;
-	weights += weightsGradient;
-	
-	outputGradient *= scalar;
-	bias += outputGradient;
-
 	float error = 0.0f;
 	for (int i = 0; i < outputs; i++)
 	{
 		error += fabs(outputGradient(0, i));
 	}
 	cout << "Error: " << error << endl;
+
+	weightsGradient *= scalar;
+	weights += weightsGradient;
+	
+	outputGradient *= scalar;
+	bias += outputGradient;
 	
 	weightsGradient.fill(0.0f);
 	outputGradient.fill(0.0f);
