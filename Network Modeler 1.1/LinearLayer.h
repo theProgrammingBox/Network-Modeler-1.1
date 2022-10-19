@@ -5,6 +5,7 @@ template <typename T>
 class LinearLayer
 {
 public:
+	LinearLayer();
 	LinearLayer(uint32_t outputs);
 	~LinearLayer();
 
@@ -23,6 +24,11 @@ public:
 	
 	uint32_t outputs;
 };
+
+template <typename T>
+LinearLayer<T>::LinearLayer()
+{
+}
 
 template <typename T>
 LinearLayer<T>::LinearLayer(uint32_t outputs)
