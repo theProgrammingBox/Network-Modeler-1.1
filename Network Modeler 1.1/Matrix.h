@@ -7,156 +7,61 @@ struct Matrix
 	T* data;
 	uint32_t rows;
 	uint32_t cols;
-	bool transposed;
 
-	Matrix() : data(nullptr), rows(0), cols(0), transposed(false) {}
-	Matrix(uint32_t rows, uint32_t cols) : data(new T[rows * cols]), rows(rows), cols(cols), transposed(false) {}
-	Matrix(const Matrix& other) : data(new T[other.rows * other.cols]), rows(other.rows), cols(other.cols), transposed(other.transposed)
-	{
-		memcpy(data, other.data, rows * cols * sizeof(T));
-	}
-	Matrix(Matrix&& other) noexcept : data(other.data), rows(other.rows), cols(other.cols), transposed(other.transposed)
-	{
-		other.data = nullptr;
-		other.rows = 0;
-		other.cols = 0;
-		other.transposed = false;
-	}
-	~Matrix()
-	{
-		delete[] data;
-	}
+	Matrix() : data(nullptr), rows(0), cols(0) {}
+	Matrix(uint32_t rows, uint32_t cols) : data(new T[rows * cols]), rows(rows), cols(cols) {}
+	Matrix(Matrix&& other) noexcept : data(other.data), rows(other.rows), cols(other.cols) {}
+	~Matrix() { delete[] data; }
 
-	Matrix& operator=(const Matrix& other)
+	T& operator()(uint32_t row, uint32_t col) { return data[row * cols + col]; }
+	const T& operator()(uint32_t row, uint32_t col) const { return data[row * cols + col]; }
+	void add(const Matrix* other) { for (uint32_t i = rows * cols; i--;) data[i] += other->data[i]; }
+	void times(const T scalar) { for (uint32_t i = rows * cols; i--;) data[i] *= scalar; }
+	void equalMatrixMinusMatrix(const Matrix* other1, const Matrix* other2) { for (uint32_t i = rows * cols; i--;) data[i] = other1->data[i] - other2->data[i]; }
+	void equalMatrixTimesMatrix(const Matrix* other1, const Matrix* other2)
 	{
-		if (this != &other)
-		{
-			delete[] data;
-			data = new T[other.rows * other.cols];
-			rows = other.rows;
-			cols = other.cols;
-			transposed = other.transposed;
-			memcpy(data, other.data, rows * cols * sizeof(T));
-		}
-		return *this;
-	}
-	Matrix& operator=(Matrix&& other) noexcept
-	{
-		if (this != &other)
-		{
-			delete[] data;
-			data = other.data;
-			rows = other.rows;
-			cols = other.cols;
-			transposed = other.transposed;
-			other.data = nullptr;
-			other.rows = 0;
-			other.cols = 0;
-			other.transposed = false;
-		}
-		return *this;
-	}
-
-	T& operator()(uint32_t row, uint32_t col)
-	{
-		return data[row * (transposed * cols + !transposed) + col * (!transposed * rows + transposed)];
-	}
-	const T& operator()(uint32_t row, uint32_t col) const
-	{
-		return data[row * (transposed * cols + !transposed) + col * (!transposed * rows + transposed)];
-	}
-
-	Matrix operator+(const Matrix& other) const
-	{
-		assert(rows == other.rows && cols == other.cols);
-		Matrix result(rows, cols);
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			result.data[i] = data[i] + other.data[i];
-		}
-		return result;
-	}
-	Matrix operator-(const Matrix& other) const
-	{
-		assert(rows == other.rows && cols == other.cols);
-		Matrix result(rows, cols);
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			result.data[i] = data[i] - other.data[i];
-		}
-		return result;
-	}
-	Matrix operator*(const Matrix& other) const
-	{
-		assert(cols == other.rows);
-		Matrix result(rows, other.cols);
 		for (uint32_t i = 0; i < rows; i++)
 		{
-			for (uint32_t j = 0; j < other.cols; j++)
+			for (uint32_t j = 0; j < cols; j++)
 			{
 				T sum = 0;
-				for (uint32_t k = 0; k < cols; k++)
+				for (uint32_t k = 0; k < other1->cols; k++)
 				{
-					sum += (*this)(i, k) * other(k, j);
+					sum += other1->data[i * other1->cols + k] * other2->data[k * other2->cols + j];
 				}
-				result(i, j) = sum;
+				data[i * cols + j] = sum;
 			}
 		}
-		return result;
 	}
-	Matrix operator*(const T& scalar) const
+	void equalMatrixTimesMatrixTransposed(const Matrix* other1, const Matrix* other2)
 	{
-		Matrix result(rows, cols);
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			result.data[i] = data[i] * scalar;
-		}
-		return result;
-	}
-
-	Matrix& operator+=(const Matrix& other)
-	{
-		assert(rows == other.rows && cols == other.cols);
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			data[i] += other.data[i];
-		}
-		return *this;
-	}
-	Matrix& operator-=(const Matrix& other)
-	{
-		assert(rows == other.rows && cols == other.cols);
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			data[i] -= other.data[i];
-		}
-		return *this;
-	}
-	Matrix& operator*=(const Matrix& other)
-	{
-		assert(cols == other.rows);
-		Matrix result(rows, other.cols);
 		for (uint32_t i = 0; i < rows; i++)
 		{
-			for (uint32_t j = 0; j < other.cols; j++)
+			for (uint32_t j = 0; j < cols; j++)
 			{
 				T sum = 0;
-				for (uint32_t k = 0; k < cols; k++)
+				for (uint32_t k = 0; k < other1->cols; k++)
 				{
-					sum += (*this)(i, k) * other(k, j);
+					sum += other1->data[i * other1->cols + k] * other2->data[j * other2->cols + k];
 				}
-				result(i, j) = sum;
+				data[i * cols + j] = sum;
 			}
 		}
-		return *this;
 	}
-	Matrix& operator*=(const T& scalar)
+	void equalMatrixTransposedTimesMatrix(const Matrix* other1, const Matrix* other2)
 	{
-		for (uint32_t i = 0; i < rows * cols; i++)
+		for (uint32_t i = 0; i < rows; i++)
 		{
-			data[i] *= scalar;
+			for (uint32_t j = 0; j < cols; j++)
+			{
+				T sum = 0;
+				for (uint32_t k = 0; k < other1->rows; k++)
+				{
+					sum += other1->data[k * other1->cols + i] * other2->data[k * other2->cols + j];
+				}
+				data[i * cols + j] = sum;
+			}
 		}
-		return *this;
 	}
 
 	void print() const
@@ -165,53 +70,24 @@ struct Matrix
 		{
 			for (uint32_t j = 0; j < cols; j++)
 			{
-				cout << (*this)(i, j) << " ";
+				cout << data[i * cols + j] << " ";
 			}
 			cout << endl;
 		}
 		cout << endl;
 	}
 
-	void transpose()
-	{
-		transposed = !transposed;
-		swap(rows, cols);
-	}
+	void zero() { memset(data, 0, rows * cols * sizeof(T)); }
 
-	void fill(const T& value)
-	{
-		memset(data, value, rows * cols * sizeof(T));
-	}
-
-	void fillRandom()
-	{
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			data[i] = random.normalRand();
-		}
-	}
+	void fillRandom() { for (uint32_t i = rows * cols; i--;) data[i] = random.normalRand(); }
 
 	template<typename F>
-	void apply(F func)
-	{
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			data[i] = func(data[i]);
-		}
-	}
-
+	void apply(F func) { for (uint32_t i = rows * cols; i--;) data[i] = func(data[i]); }
+	
 	template<typename F>
-	void addOn(F func, const Matrix& input, const Matrix& other)
-	{
-		assert(rows == input.rows && cols == input.cols);
-		assert(rows == other.rows && cols == other.cols);
-		for (uint32_t i = 0; i < rows * cols; i++)
-		{
-			data[i] += func(input.data[i], other.data[i]);
-		}
-	}
+	void apply(F func, const Matrix* input, const Matrix* gradient) { for (uint32_t i = rows * cols; i--;) data[i] = func(data[i], input->data[i], gradient->data[i]); }
 
-	void save(ofstream& file) const
+	/*void save(ofstream& file) const
 	{
 		file.write((char*)&rows, sizeof(uint32_t));
 		file.write((char*)&cols, sizeof(uint32_t));
@@ -226,5 +102,5 @@ struct Matrix
 		file.read((char*)&transposed, sizeof(bool));
 		data = new T[rows * cols];
 		file.read((char*)data, rows * cols * sizeof(T));
-	}
+	}*/
 };

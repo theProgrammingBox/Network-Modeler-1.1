@@ -1,74 +1,62 @@
-#include "LinearLayer.h"
+#include "Matrix.h"
 
 int main()
 {
 	int inputs = 2;
 	int hidden = 2;
 	int outputs = 3;
-	float learningRate = 0.05f;
-	
-	LinearLayer<float> layer(hidden);
-	layer.init(inputs);
-	
-	LinearLayer<float> layer2(outputs);
-	layer2.init(hidden);
+	float learningRate = 0.1f;
 
 	Matrix<float> input(1, inputs);
-	Matrix<float> inputGradient(1, inputs);
+	Matrix<float> hiddenOutput(1, hidden);
+	Matrix<float> output(1, outputs);
+	Matrix<float> target(1, outputs);
 
+	Matrix<float> inputGradient(1, hidden);
+	Matrix<float> hiddenGradient(1, hidden);
+	Matrix<float> outputGradient(1, outputs);
+
+	Matrix<float> hiddenWeights(inputs, hidden);
+	Matrix<float> hiddenBias(1, hidden);
+	Matrix<float> outputWeights(hidden, outputs);
+	Matrix<float> outputBias(1, outputs);
+
+	Matrix<float> hiddenWeightsGradient(inputs, hidden);
+	Matrix<float> outputWeightsGradient(hidden, outputs);
+	
+	hiddenWeights.fillRandom();
+	hiddenBias.fillRandom();
+	outputWeights.fillRandom();
+	outputBias.fillRandom();
+	
 	int iter = 100;
-	while (iter--)
-	{
+	while (iter--) {
 		input.fillRandom();
-		layer.forward(input);
-		layer2.forward(layer.output);
-
-		Matrix<float> expected(1, 3);
 		for (int i = 0; i < outputs; i++)
-		{
-			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
-		}
-		layer2.outputGradient = expected - layer2.output;
-		layer2.backward(layer.output, layer.outputGradient);
-		layer.backward(input, inputGradient);
-		layer.update(learningRate);
-		layer2.update(learningRate);
-		inputGradient.fill(0.0f);
-	}
+			target(0, i) = input(0, 0) * (i * -0.4 + 0.5) + input(0, 1) * (i * 1.2 - 0.1) + 1.7;
+		
+		hiddenOutput.equalMatrixTimesMatrix(&input, &hiddenWeights);
+		hiddenOutput.add(&hiddenBias);
+		
+		output.equalMatrixTimesMatrix(&hiddenOutput, &outputWeights);
+		output.add(&outputBias);
+		
+		outputGradient.equalMatrixMinusMatrix(&target, &output);
+		outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenOutput, &outputGradient);
+		hiddenGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
+		hiddenWeightsGradient.equalMatrixTransposedTimesMatrix(&input, &hiddenGradient);
+		
+		hiddenWeightsGradient.times(learningRate);
+		hiddenGradient.times(learningRate);
+		outputWeightsGradient.times(learningRate);
+		outputGradient.times(learningRate);
+		
+		hiddenWeights.add(&hiddenWeightsGradient);
+		hiddenBias.add(&hiddenGradient);
+		outputWeights.add(&outputWeightsGradient);
+		outputBias.add(&outputGradient);
 
-	ofstream file("network.txt", ios::binary);
-	layer.save(file);
-	layer2.save(file);
-	file.close();
-	
-	cout << endl;
-	
-	LinearLayer<float> layer11;
-	LinearLayer<float> layer22;
-	
-	ifstream file2("network.txt", ios::binary);
-	layer11.load(file2);
-	layer22.load(file2);
-	file2.close();
-
-	iter = 100;
-	while (iter--)
-	{
-		input.fillRandom();
-		layer.forward(input);
-		layer2.forward(layer.output);
-
-		Matrix<float> expected(1, 3);
-		for (int i = 0; i < outputs; i++)
-		{
-			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
-		}
-		layer2.outputGradient = expected - layer2.output;
-		layer2.backward(layer.output, layer.outputGradient);
-		layer.backward(input, inputGradient);
-		layer.update(learningRate);
-		layer2.update(learningRate);
-		inputGradient.fill(0.0f);
+		outputGradient.print();
 	}
 	
 	//int inputs = 2;
