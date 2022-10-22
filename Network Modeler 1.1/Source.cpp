@@ -42,7 +42,6 @@ int main()
 		while (iter--) {
 			input.fillRandom();
 			for (int i = 0; i < outputs; i++)
-				//(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
 				target(0, i) = input(0, 0) * (i * -1.5 + 0.4) + input(0, 1) * (i * 0.3 - 1.1) - 0.7 + (input(0, 0) > 0) * 1.3;
 				//target(0, i) = input(0, 0) * (i * -0.4 + 0.5) + input(0, 1) * (i * 1.2 - 0.1) + 1.7;
 
@@ -105,8 +104,8 @@ int main()
 		{
 			input->fillRandom();
 			for (int i = 0; i < outputs; i++)
-				(*target)(0, i) = (*input)(0, 0) * (i * -0.4 + 0.5) + (*input)(0, 1) * (i * 1.2 - 0.1) + 1.7;
-				//(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
+				//(*target)(0, i) = (*input)(0, 0) * (i * -0.4 + 0.5) + (*input)(0, 1) * (i * 1.2 - 0.1) + 1.7;
+				(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
 
 			hiddenLayer->forward();
 			outputLayer->forward();

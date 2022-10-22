@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ActivationLayer.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="Linear.h" />
     <ClInclude Include="LinearLayer.h" />
