@@ -3,7 +3,7 @@
 int main()
 {
 	int inputs = 2;
-	int hidden = 4;
+	int hidden = 6;
 	int outputs = 3;
 	float learningRate = 0.1f;
 	float max = 1.0f;
@@ -11,13 +11,13 @@ int main()
 
 	Matrix<float> input(1, inputs);
 	Matrix<float> hiddenOutput(1, hidden);
-	//Matrix<float> hiddenActivation(1, hidden);
+	Matrix<float> hiddenActivation(1, hidden);
 	Matrix<float> output(1, outputs);
 	Matrix<float> target(1, outputs);
 
 	Matrix<float> inputGradient(1, hidden);
 	Matrix<float> hiddenGradient(1, hidden);
-	//Matrix<float> hiddenActivationGradient(1, hidden);
+	Matrix<float> hiddenActivationGradient(1, hidden);
 	Matrix<float> outputGradient(1, outputs);
 
 	Matrix<float> hiddenWeights(inputs, hidden);
@@ -36,7 +36,7 @@ int main()
 	auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
 	auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
 	
-	int iter = 100;
+	int iter = 1000;
 	while (iter--) {
 		input.fillRandom();
 		for (int i = 0; i < outputs; i++)
@@ -44,18 +44,17 @@ int main()
 		
 		hiddenOutput.equalMatrixTimesMatrix(&input, &hiddenWeights);
 		hiddenOutput.add(&hiddenBias);
-		
-		//hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
-		
-		output.equalMatrixTimesMatrix(&hiddenOutput, &outputWeights);
+		hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
+		output.equalMatrixTimesMatrix(&hiddenActivation, &outputWeights);
 		output.add(&outputBias);
 		
 		outputGradient.equalMatrixMinusMatrix(&target, &output);
-		outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenOutput, &outputGradient);
+		hiddenActivationGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
+		outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenActivation, &outputGradient);
 
-		//hiddenActivationGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &outputGradient);
+		hiddenGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &hiddenActivationGradient);
 		
-		hiddenGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
+		inputGradient.equalMatrixTimesMatrixTransposed(&hiddenGradient, &hiddenWeights);
 		hiddenWeightsGradient.equalMatrixTransposedTimesMatrix(&input, &hiddenGradient);
 		
 		hiddenWeightsGradient.times(learningRate);
@@ -72,7 +71,7 @@ int main()
 		hiddenBias.add(&hiddenGradient);
 		outputWeights.add(&outputWeightsGradient);
 		outputBias.add(&outputGradient);
-
+		
 		outputGradient.print();
 	}
 	

@@ -81,9 +81,9 @@ struct Matrix
 	void fillRandom() { for (uint32_t i = rows * cols; i--;) data[i] = random.normalRand(); }
 	void clamp(T s, T b) { for (uint32_t i = rows * cols; i--;) data[i] = max(s, min(b, data[i])); }
 	template<typename F>
-	void equalAlteredMatrix(F func, const Matrix* other) { for (uint32_t i = rows * cols; i--;) data[i] = func(data[i], other->data[i]); }
+	void equalAlteredMatrix(F func, const Matrix* other) { for (uint32_t i = rows * cols; i--;) data[i] = func(other->data[i]); }
 	template<typename F>
-	void equalAlteredMatrixGradient(F func, const Matrix* input, const Matrix* gradient) { for (uint32_t i = rows * cols; i--;) data[i] = func(data[i], input->data[i], gradient->data[i]); }
+	void equalAlteredMatrixGradient(F func, const Matrix* input, const Matrix* gradient) { for (uint32_t i = rows * cols; i--;) data[i] = func(input->data[i], gradient->data[i]); }
 
 	/*void save(ofstream& file) const
 	{
