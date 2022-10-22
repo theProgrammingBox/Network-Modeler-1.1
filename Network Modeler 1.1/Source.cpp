@@ -3,17 +3,21 @@
 int main()
 {
 	int inputs = 2;
-	int hidden = 2;
+	int hidden = 4;
 	int outputs = 3;
 	float learningRate = 0.1f;
+	float max = 1.0f;
+	float min = -1.0f;
 
 	Matrix<float> input(1, inputs);
 	Matrix<float> hiddenOutput(1, hidden);
+	//Matrix<float> hiddenActivation(1, hidden);
 	Matrix<float> output(1, outputs);
 	Matrix<float> target(1, outputs);
 
 	Matrix<float> inputGradient(1, hidden);
 	Matrix<float> hiddenGradient(1, hidden);
+	//Matrix<float> hiddenActivationGradient(1, hidden);
 	Matrix<float> outputGradient(1, outputs);
 
 	Matrix<float> hiddenWeights(inputs, hidden);
@@ -29,6 +33,9 @@ int main()
 	outputWeights.fillRandom();
 	outputBias.fillRandom();
 	
+	auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
+	auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
+	
 	int iter = 100;
 	while (iter--) {
 		input.fillRandom();
@@ -38,11 +45,16 @@ int main()
 		hiddenOutput.equalMatrixTimesMatrix(&input, &hiddenWeights);
 		hiddenOutput.add(&hiddenBias);
 		
+		//hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
+		
 		output.equalMatrixTimesMatrix(&hiddenOutput, &outputWeights);
 		output.add(&outputBias);
 		
 		outputGradient.equalMatrixMinusMatrix(&target, &output);
 		outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenOutput, &outputGradient);
+
+		//hiddenActivationGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &outputGradient);
+		
 		hiddenGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
 		hiddenWeightsGradient.equalMatrixTransposedTimesMatrix(&input, &hiddenGradient);
 		
@@ -50,6 +62,11 @@ int main()
 		hiddenGradient.times(learningRate);
 		outputWeightsGradient.times(learningRate);
 		outputGradient.times(learningRate);
+
+		hiddenWeightsGradient.clamp(min, max);
+		hiddenGradient.clamp(min, max);
+		outputWeightsGradient.clamp(min, max);
+		outputGradient.clamp(min, max);
 		
 		hiddenWeights.add(&hiddenWeightsGradient);
 		hiddenBias.add(&hiddenGradient);
