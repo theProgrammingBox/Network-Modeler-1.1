@@ -1,121 +1,105 @@
-//#pragma once
-//#include "Matrix.h"
-//
-//template <typename T>
-//class LinearLayer
-//{
-//public:
-//	LinearLayer();
-//	LinearLayer(uint32_t outputs);
-//	~LinearLayer();
-//
-//	void init(uint32_t inputs);
-//	void forward(Matrix<T>& input);
-//	void backward(Matrix<T>& input, Matrix<T>& inputGradient);
-//	void update(T scalar);
-//	void save(ofstream& file);
-//	void load(ifstream& file);
-//
-//	Matrix<T> weights;
-//	Matrix<T> weightsGradient;
-//	Matrix<T> bias;
-//	Matrix<T> output;
-//	Matrix<T> outputGradient;
-//	
-//	uint32_t outputs;
-//};
-//
-//template <typename T>
-//LinearLayer<T>::LinearLayer()
-//{
-//}
-//
-//template <typename T>
-//LinearLayer<T>::LinearLayer(uint32_t outputs)
-//{
-//	this->outputs = outputs;
-//}
-//
-//template <typename T>
-//LinearLayer<T>::~LinearLayer()
-//{
-//}
-//
-//template <typename T>
-//void LinearLayer<T>::init(uint32_t inputs)
-//{
-//	weights = Matrix<T>(inputs, outputs);
-//	weightsGradient = Matrix<T>(inputs, outputs);
-//	bias = Matrix<T>(1, outputs);
-//	output = Matrix<T>(1, outputs);
-//	outputGradient = Matrix<T>(1, outputs);
-//	weights.fillRandom();
-//	weightsGradient.fill(0.0f);
-//	bias.fillRandom();
-//	outputGradient.fill(0.0f);
-//	
-//	/*cout << "weights: " << endl;
-//	weights.print();
-//	cout << "bias: " << endl;
-//	bias.print();*/
-//}
-//
-//template <typename T>
-//void LinearLayer<T>::forward(Matrix<T>& input)
-//{
-//	output = input * weights + bias;
-//	
-//	/*cout << "output: " << endl;
-//	output.print();*/
-//}
-//
-//template <typename T>
-//void LinearLayer<T>::backward(Matrix<T>& input, Matrix<T>& inputGradient)
-//{
-//	input.transpose();
-//	weightsGradient += input * outputGradient;
-//	input.transpose();
-//	
-//	weights.transpose();
-//	inputGradient += outputGradient * weights;
-//	weights.transpose();
-//	
-//	/*cout << "weightsGradient:" << endl;
-//	weightsGradient.print();
-//	cout << "inputGradient:" << endl;
-//	inputGradient.print();*/
-//}
-//
-//template <typename T>
-//void LinearLayer<T>::update(T scalar)
-//{
-//	float error = 0.0f;
-//	for (int i = 0; i < outputs; i++)
-//	{
-//		error += fabs(outputGradient(0, i));
-//	}
-//	cout << "Error: " << error << endl;
-//
-//	weightsGradient *= scalar;
-//	weights += weightsGradient;
-//	
-//	outputGradient *= scalar;
-//	bias += outputGradient;
-//	
-//	weightsGradient.fill(0.0f);
-//	outputGradient.fill(0.0f);
-//}
-//
-//template <typename T>
-//void LinearLayer<T>::save(ofstream& file)
-//{
-//	weights.save(file);
-//	bias.save(file);
-//}
-//
-//template <typename T>
-//void LinearLayer<T>::load(ifstream& file)
-//{
-//	weights.load(file);
-//	bias.load(file);
-//}
+#pragma once
+#include "Linear.h"
+
+template <typename T>
+class LinearLayer : public Layer<T>
+{
+public:
+	LinearLayer(uint32_t outputSize);
+	~LinearLayer() override;
+	
+	void init(Matrix<T>* input, Matrix<T>* inputGradient) override;
+	void forward() override;
+	void backward() override;
+	void update(T scalar) override;
+	void print() const override;
+
+	Matrix<T>* weights;
+	Matrix<T>* bias;
+	Matrix<T>* weightsGradient;
+	Matrix<T>* biasGradient;
+};
+
+template <typename T>
+LinearLayer<T>::LinearLayer(uint32_t outputSize) : Layer<T>()
+{
+	bias = new Matrix<T>(1, outputSize);
+	biasGradient = new Matrix<T>(1, outputSize);
+	this->output = new Matrix<T>(1, outputSize);
+	this->outputGradient = new Matrix<T>(1, outputSize);
+
+	bias->fillRandom();
+	biasGradient->zero();
+	this->outputGradient->zero();
+}
+
+template <typename T>
+LinearLayer<T>::~LinearLayer()
+{
+	delete weights;
+	delete bias;
+	delete weightsGradient;
+	delete biasGradient;
+	delete this->output;
+	delete this->outputGradient;
+}
+
+template <typename T>
+void LinearLayer<T>::init(Matrix<T>* input, Matrix<T>* inputGradient)
+{
+	this->input = input;
+	this->inputGradient = inputGradient;
+	weights = new Matrix<T>(input->cols, this->output->cols);
+	weightsGradient = new Matrix<T>(input->cols, this->output->cols);
+
+	this->inputGradient->fillRandom();
+	weights->fillRandom();
+	weightsGradient->zero();
+}
+
+template <typename T>
+void LinearLayer<T>::forward()
+{
+	this->output->equalMatrixTimesMatrix(this->input, weights);
+	this->output->add(bias);
+}
+
+template <typename T>
+void LinearLayer<T>::backward()
+{
+	this->inputGradient->equalMatrixTimesMatrixTransposed(this->outputGradient, weights);
+	weightsGradient->equalMatrixTransposedTimesMatrix(this->input, this->outputGradient);
+}
+
+template <typename T>
+void LinearLayer<T>::update(T scalar)
+{
+	weightsGradient->times(scalar);
+	this->outputGradient->times(scalar);
+	weightsGradient->clamp(-1.0f, 1.0f);
+	this->outputGradient->clamp(-1.0f, 1.0f);
+	weights->add(weightsGradient);
+	bias->add(this->outputGradient);
+}
+
+template <typename T>
+void LinearLayer<T>::print() const
+{
+	cout << "LinearLayer" << endl;
+	cout << "input:\n";
+	this->input->print();
+	cout << "inputGradient:\n";
+	this->inputGradient->print();
+	cout << "weights:\n";
+	weights->print();
+	cout << "weightsGradient:\n";
+	weightsGradient->print();
+	cout << "bias:\n";
+	bias->print();
+	cout << "biasGradient:\n";
+	biasGradient->print();
+	cout << "output:\n";
+	this->output->print();
+	cout << "outputGradient:\n";
+	this->outputGradient->print();
+}

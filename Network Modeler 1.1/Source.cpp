@@ -1,80 +1,131 @@
-#include "Matrix.h"
+#include "LinearLayer.h"
 
 int main()
 {
-	int inputs = 2;
-	int hidden = 6;
-	int outputs = 3;
-	float learningRate = 0.1f;
-	float max = 1.0f;
-	float min = -1.0f;
+	if (false)
+	{
+		int inputs = 2;
+		int hidden = 6;
+		int outputs = 3;
+		float learningRate = 0.1f;
+		float max = 1.0f;
+		float min = -1.0f;
 
-	Matrix<float> input(1, inputs);
-	Matrix<float> hiddenOutput(1, hidden);
-	Matrix<float> hiddenActivation(1, hidden);
-	Matrix<float> output(1, outputs);
-	Matrix<float> target(1, outputs);
+		Matrix<float> input(1, inputs);
+		Matrix<float> hiddenOutput(1, hidden);
+		//Matrix<float> hiddenActivation(1, hidden);
+		Matrix<float> output(1, outputs);
+		Matrix<float> target(1, outputs);
 
-	Matrix<float> inputGradient(1, hidden);
-	Matrix<float> hiddenGradient(1, hidden);
-	Matrix<float> hiddenActivationGradient(1, hidden);
-	Matrix<float> outputGradient(1, outputs);
+		Matrix<float> inputGradient(1, hidden);
+		Matrix<float> hiddenGradient(1, hidden);
+		//Matrix<float> hiddenActivationGradient(1, hidden);
+		Matrix<float> outputGradient(1, outputs);
 
-	Matrix<float> hiddenWeights(inputs, hidden);
-	Matrix<float> hiddenBias(1, hidden);
-	Matrix<float> outputWeights(hidden, outputs);
-	Matrix<float> outputBias(1, outputs);
+		Matrix<float> hiddenWeights(inputs, hidden);
+		Matrix<float> hiddenBias(1, hidden);
+		Matrix<float> outputWeights(hidden, outputs);
+		Matrix<float> outputBias(1, outputs);
 
-	Matrix<float> hiddenWeightsGradient(inputs, hidden);
-	Matrix<float> outputWeightsGradient(hidden, outputs);
-	
-	hiddenWeights.fillRandom();
-	hiddenBias.fillRandom();
-	outputWeights.fillRandom();
-	outputBias.fillRandom();
-	
-	auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
-	auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
-	
-	int iter = 1000;
-	while (iter--) {
-		input.fillRandom();
-		for (int i = 0; i < outputs; i++)
-			target(0, i) = input(0, 0) * (i * -0.4 + 0.5) + input(0, 1) * (i * 1.2 - 0.1) + 1.7;
-		
-		hiddenOutput.equalMatrixTimesMatrix(&input, &hiddenWeights);
-		hiddenOutput.add(&hiddenBias);
-		hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
-		output.equalMatrixTimesMatrix(&hiddenActivation, &outputWeights);
-		output.add(&outputBias);
-		
-		outputGradient.equalMatrixMinusMatrix(&target, &output);
-		hiddenActivationGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
-		outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenActivation, &outputGradient);
+		Matrix<float> hiddenWeightsGradient(inputs, hidden);
+		Matrix<float> outputWeightsGradient(hidden, outputs);
 
-		hiddenGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &hiddenActivationGradient);
-		
-		inputGradient.equalMatrixTimesMatrixTransposed(&hiddenGradient, &hiddenWeights);
-		hiddenWeightsGradient.equalMatrixTransposedTimesMatrix(&input, &hiddenGradient);
-		
-		hiddenWeightsGradient.times(learningRate);
-		hiddenGradient.times(learningRate);
-		outputWeightsGradient.times(learningRate);
-		outputGradient.times(learningRate);
+		hiddenWeights.fillRandom();
+		hiddenBias.fillRandom();
+		outputWeights.fillRandom();
+		outputBias.fillRandom();
 
-		hiddenWeightsGradient.clamp(min, max);
-		hiddenGradient.clamp(min, max);
-		outputWeightsGradient.clamp(min, max);
-		outputGradient.clamp(min, max);
-		
-		hiddenWeights.add(&hiddenWeightsGradient);
-		hiddenBias.add(&hiddenGradient);
-		outputWeights.add(&outputWeightsGradient);
-		outputBias.add(&outputGradient);
-		
+		auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
+		auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
+
+		int iter = 1000;
+		while (iter--) {
+			input.fillRandom();
+			for (int i = 0; i < outputs; i++)
+				//(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
+				target(0, i) = input(0, 0) * (i * -1.5 + 0.4) + input(0, 1) * (i * 0.3 - 1.1) - 0.7 + (input(0, 0) > 0) * 1.3;
+				//target(0, i) = input(0, 0) * (i * -0.4 + 0.5) + input(0, 1) * (i * 1.2 - 0.1) + 1.7;
+
+			hiddenOutput.equalMatrixTimesMatrix(&input, &hiddenWeights);
+			hiddenOutput.add(&hiddenBias);
+			//hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
+			//output.equalMatrixTimesMatrix(&hiddenActivation, &outputWeights);
+			output.equalMatrixTimesMatrix(&hiddenOutput, &outputWeights);
+			output.add(&outputBias);
+
+			outputGradient.equalMatrixMinusMatrix(&target, &output);
+			//hiddenActivationGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
+			//outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenActivation, &outputGradient);
+			hiddenGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
+			outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenOutput, &outputGradient);
+
+			//hiddenGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &hiddenActivationGradient);
+
+			inputGradient.equalMatrixTimesMatrixTransposed(&hiddenGradient, &hiddenWeights);
+			hiddenWeightsGradient.equalMatrixTransposedTimesMatrix(&input, &hiddenGradient);
+
+			hiddenWeightsGradient.times(learningRate);
+			hiddenGradient.times(learningRate);
+			outputWeightsGradient.times(learningRate);
+			outputGradient.times(learningRate);
+
+			hiddenWeightsGradient.clamp(min, max);
+			hiddenGradient.clamp(min, max);
+			outputWeightsGradient.clamp(min, max);
+			outputGradient.clamp(min, max);
+
+			hiddenWeights.add(&hiddenWeightsGradient);
+			hiddenBias.add(&hiddenGradient);
+			outputWeights.add(&outputWeightsGradient);
+			outputBias.add(&outputGradient);
+		}
 		outputGradient.print();
 	}
-	
+	else
+	{
+		int inputs = 2;
+		int hidden = 6;
+		int outputs = 3;
+		float learningRate = 0.1f;
+		float max = 1.0f;
+		float min = -1.0f;
+
+		Matrix<float>* input = new Matrix<float>(1, inputs);
+		Matrix<float>* inputGradient = new Matrix<float>(1, inputs);
+		Matrix<float>* target = new Matrix<float>(1, outputs);
+
+		Layer<float>* hiddenLayer = new LinearLayer<float>(hidden);
+		hiddenLayer->init(input, inputGradient);
+
+		Layer<float>* outputLayer = new LinearLayer<float>(outputs);
+		outputLayer->init(hiddenLayer->output, hiddenLayer->outputGradient);
+
+		int iter = 1000;
+		while (iter--)
+		{
+			input->fillRandom();
+			for (int i = 0; i < outputs; i++)
+				(*target)(0, i) = (*input)(0, 0) * (i * -0.4 + 0.5) + (*input)(0, 1) * (i * 1.2 - 0.1) + 1.7;
+				//(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
+
+			hiddenLayer->forward();
+			outputLayer->forward();
+
+			outputLayer->outputGradient->equalMatrixMinusMatrix(target, outputLayer->output);
+			outputLayer->backward();
+			hiddenLayer->backward();
+
+			hiddenLayer->update(learningRate);
+			outputLayer->update(learningRate);
+		}
+
+		outputLayer->outputGradient->print();
+
+		delete input;
+		delete inputGradient;
+		delete hiddenLayer;
+	}
+
 	//int inputs = 2;
 	//int outputs = 3;
 	//int batchSize = 100;

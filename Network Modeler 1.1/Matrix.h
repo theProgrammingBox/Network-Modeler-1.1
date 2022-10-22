@@ -10,7 +10,6 @@ struct Matrix
 
 	Matrix() : data(nullptr), rows(0), cols(0) {}
 	Matrix(uint32_t rows, uint32_t cols) : data(new T[rows * cols]), rows(rows), cols(cols) {}
-	Matrix(Matrix&& other) noexcept : data(other.data), rows(other.rows), cols(other.cols) {}
 	~Matrix() { delete[] data; }
 
 	T& operator()(uint32_t row, uint32_t col) { return data[row * cols + col]; }

@@ -9,6 +9,7 @@ using std::max;
 using std::min;
 using std::cout;
 using std::endl;
+using std::move;
 //using std::vector;
 //using std::string;
 //using std::to_string;
