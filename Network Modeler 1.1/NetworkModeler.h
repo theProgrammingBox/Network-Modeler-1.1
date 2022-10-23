@@ -8,8 +8,7 @@ public:
 	NetworkModeler();
 	~NetworkModeler();
 
-	void setInput(Matrix<T>* input);
-	void setTarget(Matrix<T>* target);
+	void setIO(Matrix<T>* input, Matrix<T>* target);
 	void addLayer(Layer<T>* layer);
 	Matrix<T>* getOutput() const;
 	void init();
@@ -21,6 +20,7 @@ public:
 	vector<Layer<T>*> layers;
 	Matrix<T>* input;
 	Matrix<T>* inputGradient;
+	// input bias?
 	Matrix<T>* output;
 	Matrix<T>* target;
 };
@@ -36,16 +36,11 @@ NetworkModeler<T>::~NetworkModeler()
 }
 
 template <typename T>
-void NetworkModeler<T>::setInput(Matrix<T>* input)
+void NetworkModeler<T>::setIO(Matrix<T>* input, Matrix<T>* target)
 {
 	this->input = input;
-	inputGradient = new Matrix<T>(input->rows, input->cols);
-}
-
-template <typename T>
-void NetworkModeler<T>::setTarget(Matrix<T>* target)
-{
 	this->target = target;
+	inputGradient = new Matrix<T>(input->rows, input->cols);
 }
 
 template <typename T>
