@@ -5,8 +5,7 @@ template <typename T>
 class ActivationLayer : public Layer<T>
 {
 public:
-	template <typename F>
-	ActivationLayer(F&& activationFunction, F&& activationFunctionGradient);
+	ActivationLayer(function<T(T)> activation, function<T(T, T)> activationGradient);
 	~ActivationLayer() override;
 
 	void init(Matrix<T>* input, Matrix<T>* inputGradient) override;
@@ -16,16 +15,15 @@ public:
 	void print() const override;
 
 private:
-	T(*activationFunction)(T);
-	T(*activationFunctionGradient)(T);
+	function<T(T)> activationFunction;
+	function<T(T, T)> activationFunctionGradient;
 };
 
 template <typename T>
-template <typename F>
-ActivationLayer<T>::ActivationLayer(F&& activationFunction, F&& activationFunctionGradient) : Layer<T>()
+ActivationLayer<T>::ActivationLayer(function<T(T)> activation, function<T(T, T)> activationGradient) : Layer<T>()
 {
-	this->activationFunction = activationFunction;
-	this->activationFunctionGradient = activationFunctionGradient;
+	activationFunction = activation;
+	activationFunctionGradient = activationGradient;
 }
 
 template <typename T>
@@ -45,7 +43,7 @@ void ActivationLayer<T>::init(Matrix<T>* input, Matrix<T>* inputGradient)
 template <typename T>
 void ActivationLayer<T>::forward()
 {
-	output->equalAlteredMatrix(activationFunction, input);
+	this->output->equalAlteredMatrix(activationFunction, this->input);
 }
 
 template <typename T>

@@ -1,11 +1,12 @@
 #include "LinearLayer.h"
+#include "ActivationLayer.h"
 
 int main()
 {
-	if (false)
+	if (true)
 	{
 		int inputs = 2;
-		int hidden = 6;
+		int hidden = 4;
 		int outputs = 3;
 		float learningRate = 0.1f;
 		float max = 1.0f;
@@ -13,13 +14,13 @@ int main()
 
 		Matrix<float> input(1, inputs);
 		Matrix<float> hiddenOutput(1, hidden);
-		//Matrix<float> hiddenActivation(1, hidden);
+		Matrix<float> hiddenActivation(1, hidden);
 		Matrix<float> output(1, outputs);
 		Matrix<float> target(1, outputs);
 
 		Matrix<float> inputGradient(1, hidden);
 		Matrix<float> hiddenGradient(1, hidden);
-		//Matrix<float> hiddenActivationGradient(1, hidden);
+		Matrix<float> hiddenActivationGradient(1, hidden);
 		Matrix<float> outputGradient(1, outputs);
 
 		Matrix<float> hiddenWeights(inputs, hidden);
@@ -37,6 +38,8 @@ int main()
 
 		auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
 		auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
+		/*function<float(float)> leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
+		function<float(float, float)> leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };*/
 
 		int iter = 1000;
 		while (iter--) {
@@ -47,18 +50,17 @@ int main()
 
 			hiddenOutput.equalMatrixTimesMatrix(&input, &hiddenWeights);
 			hiddenOutput.add(&hiddenBias);
-			//hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
-			//output.equalMatrixTimesMatrix(&hiddenActivation, &outputWeights);
-			output.equalMatrixTimesMatrix(&hiddenOutput, &outputWeights);
+			hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
+			output.equalMatrixTimesMatrix(&hiddenActivation, &outputWeights);
 			output.add(&outputBias);
 
 			outputGradient.equalMatrixMinusMatrix(&target, &output);
-			//hiddenActivationGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
-			//outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenActivation, &outputGradient);
-			hiddenGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
-			outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenOutput, &outputGradient);
+			hiddenActivationGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
+			outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenActivation, &outputGradient);
+			//hiddenGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
+			//outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenOutput, &outputGradient);
 
-			//hiddenGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &hiddenActivationGradient);
+			hiddenGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &hiddenActivationGradient);
 
 			inputGradient.equalMatrixTimesMatrixTransposed(&hiddenGradient, &hiddenWeights);
 			hiddenWeightsGradient.equalMatrixTransposedTimesMatrix(&input, &hiddenGradient);
@@ -89,6 +91,9 @@ int main()
 		float max = 1.0f;
 		float min = -1.0f;
 
+		auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
+		auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
+
 		Matrix<float>* input = new Matrix<float>(1, inputs);
 		Matrix<float>* inputGradient = new Matrix<float>(1, inputs);
 		Matrix<float>* target = new Matrix<float>(1, outputs);
@@ -96,8 +101,11 @@ int main()
 		Layer<float>* hiddenLayer = new LinearLayer<float>(hidden);
 		hiddenLayer->init(input, inputGradient);
 
+		Layer<float>* activationLayer = new ActivationLayer<float>(leakyRelu, leakyReluGradient);
+		activationLayer->init(hiddenLayer->output, hiddenLayer->outputGradient);
+
 		Layer<float>* outputLayer = new LinearLayer<float>(outputs);
-		outputLayer->init(hiddenLayer->output, hiddenLayer->outputGradient);
+		outputLayer->init(activationLayer->output, activationLayer->outputGradient);
 
 		int iter = 1000;
 		while (iter--)
@@ -108,13 +116,16 @@ int main()
 				(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
 
 			hiddenLayer->forward();
+			activationLayer->forward();
 			outputLayer->forward();
 
 			outputLayer->outputGradient->equalMatrixMinusMatrix(target, outputLayer->output);
 			outputLayer->backward();
+			activationLayer->backward();
 			hiddenLayer->backward();
 
 			hiddenLayer->update(learningRate);
+			activationLayer->update(learningRate);
 			outputLayer->update(learningRate);
 		}
 

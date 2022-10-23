@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <functional>
 //#include <vector>
 //#include <string>
 //#include <fstream>
@@ -10,6 +11,7 @@ using std::min;
 using std::cout;
 using std::endl;
 using std::move;
+using std::function;
 //using std::vector;
 //using std::string;
 //using std::to_string;
