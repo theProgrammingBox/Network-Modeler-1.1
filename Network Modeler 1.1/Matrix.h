@@ -15,6 +15,8 @@ struct Matrix
 	T& operator()(uint32_t row, uint32_t col) { return data[row * cols + col]; }
 	const T& operator()(uint32_t row, uint32_t col) const { return data[row * cols + col]; }
 	void add(const Matrix* other) { for (uint32_t i = rows * cols; i--;) data[i] += other->data[i]; }
+	void add(const Matrix* other, const T scalar) { for (uint32_t i = rows * cols; i--;) data[i] += other->data[i] * scalar; }
+	void add(const Matrix* other, const T scalar, const T minimum, const T maximum) { for (uint32_t i = rows * cols; i--;) data[i] = min(max(data[i] + other->data[i] * scalar, minimum), maximum); }
 	void times(const T scalar) { for (uint32_t i = rows * cols; i--;) data[i] *= scalar; }
 	void equalMatrixMinusMatrix(const Matrix* other1, const Matrix* other2) { for (uint32_t i = rows * cols; i--;) data[i] = other1->data[i] - other2->data[i]; }
 	void equalMatrixTimesMatrix(const Matrix* other1, const Matrix* other2)
@@ -78,11 +80,8 @@ struct Matrix
 
 	void zero() { memset(data, 0, rows * cols * sizeof(T)); }
 	void fillRandom() { for (uint32_t i = rows * cols; i--;) data[i] = random.normalRand(); }
-	void clamp(T s, T b) { for (uint32_t i = rows * cols; i--;) data[i] = max(s, min(b, data[i])); }
-	template<typename F>
-	void equalAlteredMatrix(F func, const Matrix* other) { for (uint32_t i = rows * cols; i--;) data[i] = func(other->data[i]); }
-	template<typename F>
-	void equalAlteredMatrixGradient(F func, const Matrix* input, const Matrix* gradient) { for (uint32_t i = rows * cols; i--;) data[i] = func(input->data[i], gradient->data[i]); }
+	void equalAlteredMatrix(function<T(T)> func, const Matrix* other) { for (uint32_t i = rows * cols; i--;) data[i] = func(other->data[i]); }
+	void equalAlteredMatrixGradient(function<T(T, T)> func, const Matrix* input, const Matrix* gradient) { for (uint32_t i = rows * cols; i--;) data[i] = func(input->data[i], gradient->data[i]); }
 
 	/*void save(ofstream& file) const
 	{

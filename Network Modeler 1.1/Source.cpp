@@ -1,232 +1,111 @@
 #include "LinearLayer.h"
 #include "ActivationLayer.h"
+#include "NetworkModeler.h"
 
 int main()
 {
-	if (true)
+	/*int inputs = 2;
+	int hidden = 8;
+	int outputs = 3;
+	float learningRate = 0.1f;
+	float max = 1.0f;
+	float min = -1.0f;
+
+	auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
+	auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
+
+	Matrix<float>* input = new Matrix<float>(1, inputs);
+	Matrix<float>* inputGradient = new Matrix<float>(1, inputs);
+	Matrix<float>* target = new Matrix<float>(1, outputs);
+
+	Layer<float>* hiddenLayer = new LinearLayer<float>(hidden);
+	hiddenLayer->init(input, inputGradient);
+
+	Layer<float>* activationLayer = new ActivationLayer<float>(leakyRelu, leakyReluGradient);
+	activationLayer->init(hiddenLayer->output, hiddenLayer->outputGradient);
+
+	Layer<float>* hiddenLayer2 = new LinearLayer<float>(hidden);
+	hiddenLayer2->init(activationLayer->output, activationLayer->outputGradient);
+
+	Layer<float>* activationLayer2 = new ActivationLayer<float>(leakyRelu, leakyReluGradient);
+	activationLayer2->init(hiddenLayer2->output, hiddenLayer2->outputGradient);
+
+	Layer<float>* outputLayer = new LinearLayer<float>(outputs);
+	outputLayer->init(activationLayer2->output, activationLayer2->outputGradient);
+
+	int iter = 1000;
+	while (iter--)
 	{
-		int inputs = 2;
-		int hidden = 4;
-		int outputs = 3;
-		float learningRate = 0.1f;
-		float max = 1.0f;
-		float min = -1.0f;
+		input->fillRandom();
+		for (int i = 0; i < outputs; i++)
+			(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
 
-		Matrix<float> input(1, inputs);
-		Matrix<float> hiddenOutput(1, hidden);
-		Matrix<float> hiddenActivation(1, hidden);
-		Matrix<float> output(1, outputs);
-		Matrix<float> target(1, outputs);
+		hiddenLayer->forward();
+		activationLayer->forward();
+		hiddenLayer2->forward();
+		activationLayer2->forward();
+		outputLayer->forward();
 
-		Matrix<float> inputGradient(1, hidden);
-		Matrix<float> hiddenGradient(1, hidden);
-		Matrix<float> hiddenActivationGradient(1, hidden);
-		Matrix<float> outputGradient(1, outputs);
+		outputLayer->outputGradient->equalMatrixMinusMatrix(target, outputLayer->output);
+		outputLayer->backward();
+		activationLayer2->backward();
+		hiddenLayer2->backward();
+		activationLayer->backward();
+		hiddenLayer->backward();
 
-		Matrix<float> hiddenWeights(inputs, hidden);
-		Matrix<float> hiddenBias(1, hidden);
-		Matrix<float> outputWeights(hidden, outputs);
-		Matrix<float> outputBias(1, outputs);
-
-		Matrix<float> hiddenWeightsGradient(inputs, hidden);
-		Matrix<float> outputWeightsGradient(hidden, outputs);
-
-		hiddenWeights.fillRandom();
-		hiddenBias.fillRandom();
-		outputWeights.fillRandom();
-		outputBias.fillRandom();
-
-		auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
-		auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
-		/*function<float(float)> leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
-		function<float(float, float)> leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };*/
-
-		int iter = 1000;
-		while (iter--) {
-			input.fillRandom();
-			for (int i = 0; i < outputs; i++)
-				target(0, i) = input(0, 0) * (i * -1.5 + 0.4) + input(0, 1) * (i * 0.3 - 1.1) - 0.7 + (input(0, 0) > 0) * 1.3;
-				//target(0, i) = input(0, 0) * (i * -0.4 + 0.5) + input(0, 1) * (i * 1.2 - 0.1) + 1.7;
-
-			hiddenOutput.equalMatrixTimesMatrix(&input, &hiddenWeights);
-			hiddenOutput.add(&hiddenBias);
-			hiddenActivation.equalAlteredMatrix(leakyRelu, &hiddenOutput);
-			output.equalMatrixTimesMatrix(&hiddenActivation, &outputWeights);
-			output.add(&outputBias);
-
-			outputGradient.equalMatrixMinusMatrix(&target, &output);
-			hiddenActivationGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
-			outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenActivation, &outputGradient);
-			//hiddenGradient.equalMatrixTimesMatrixTransposed(&outputGradient, &outputWeights);
-			//outputWeightsGradient.equalMatrixTransposedTimesMatrix(&hiddenOutput, &outputGradient);
-
-			hiddenGradient.equalAlteredMatrixGradient(leakyReluGradient, &hiddenOutput, &hiddenActivationGradient);
-
-			inputGradient.equalMatrixTimesMatrixTransposed(&hiddenGradient, &hiddenWeights);
-			hiddenWeightsGradient.equalMatrixTransposedTimesMatrix(&input, &hiddenGradient);
-
-			hiddenWeightsGradient.times(learningRate);
-			hiddenGradient.times(learningRate);
-			outputWeightsGradient.times(learningRate);
-			outputGradient.times(learningRate);
-
-			hiddenWeightsGradient.clamp(min, max);
-			hiddenGradient.clamp(min, max);
-			outputWeightsGradient.clamp(min, max);
-			outputGradient.clamp(min, max);
-
-			hiddenWeights.add(&hiddenWeightsGradient);
-			hiddenBias.add(&hiddenGradient);
-			outputWeights.add(&outputWeightsGradient);
-			outputBias.add(&outputGradient);
-		}
-		outputGradient.print();
-	}
-	else
-	{
-		int inputs = 2;
-		int hidden = 6;
-		int outputs = 3;
-		float learningRate = 0.1f;
-		float max = 1.0f;
-		float min = -1.0f;
-
-		auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
-		auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
-
-		Matrix<float>* input = new Matrix<float>(1, inputs);
-		Matrix<float>* inputGradient = new Matrix<float>(1, inputs);
-		Matrix<float>* target = new Matrix<float>(1, outputs);
-
-		Layer<float>* hiddenLayer = new LinearLayer<float>(hidden);
-		hiddenLayer->init(input, inputGradient);
-
-		Layer<float>* activationLayer = new ActivationLayer<float>(leakyRelu, leakyReluGradient);
-		activationLayer->init(hiddenLayer->output, hiddenLayer->outputGradient);
-
-		Layer<float>* outputLayer = new LinearLayer<float>(outputs);
-		outputLayer->init(activationLayer->output, activationLayer->outputGradient);
-
-		int iter = 1000;
-		while (iter--)
-		{
-			input->fillRandom();
-			for (int i = 0; i < outputs; i++)
-				//(*target)(0, i) = (*input)(0, 0) * (i * -0.4 + 0.5) + (*input)(0, 1) * (i * 1.2 - 0.1) + 1.7;
-				(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
-
-			hiddenLayer->forward();
-			activationLayer->forward();
-			outputLayer->forward();
-
-			outputLayer->outputGradient->equalMatrixMinusMatrix(target, outputLayer->output);
-			outputLayer->backward();
-			activationLayer->backward();
-			hiddenLayer->backward();
-
-			hiddenLayer->update(learningRate);
-			activationLayer->update(learningRate);
-			outputLayer->update(learningRate);
-		}
-
-		outputLayer->outputGradient->print();
-
-		delete input;
-		delete inputGradient;
-		delete hiddenLayer;
+		hiddenLayer->update(learningRate);
+		activationLayer->update(learningRate);
+		hiddenLayer2->update(learningRate);
+		activationLayer2->update(learningRate);
+		outputLayer->update(learningRate);
 	}
 
-	//int inputs = 2;
-	//int outputs = 3;
-	//int batchSize = 100;
-	//float invBatchSize = 1.0f / batchSize;
-	//float learningRate = 0.1f;
+	outputLayer->outputGradient->print();
 
-	//Matrix<float> input(1, inputs);
-	//Matrix<float> weights(inputs, outputs);
-	//Matrix<float> bias(1, outputs);
-	//Matrix<float> output(1, outputs);
-	//Matrix<float> outputActivated(1, outputs);
+	delete input;
+	delete inputGradient;
+	delete hiddenLayer;*/
 
-	//auto nothing = [](float x) { return x; };
-	//auto nothingGradient = [](float x, float y) { return y; };
-	//auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
-	//auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
-	//auto relu = [](float x) { return x * (x > 0.0f); };
-	//auto reluGradient = [](float x, float y) { return y * (x > 0.0f); };
+	NetworkModeler<float> modeler;
+	
+	uint32_t inputs = 2;
+	uint32_t outputs = 3;
+	float learningRate = 0.01f;
+	Matrix<float>* input = new Matrix<float>(1, inputs);
+	Matrix<float>* target = new Matrix<float>(1, outputs);
+	Matrix<float>* output;
 
-	//auto activation = leakyRelu;
-	//auto activationGradient = leakyReluGradient;
+	auto leakyRelu = [](float x) { return x * (1.0f - (x < 0.0f) * 0.9f); };
+	auto leakyReluGradient = [](float x, float y) { return y * (1.0f - (x < 0.0f) * 0.9f); };
 
-	//weights.fillRandom();
-	//bias.fillRandom();
+	modeler.setInput(input);
+	modeler.setTarget(target);
+	modeler.addLayer(new LinearLayer<float>(8));
+	modeler.addLayer(new ActivationLayer<float>(leakyRelu, leakyReluGradient));
+	modeler.addLayer(new LinearLayer<float>(16));
+	modeler.addLayer(new ActivationLayer<float>(leakyRelu, leakyReluGradient));
+	modeler.addLayer(new LinearLayer<float>(8));
+	modeler.addLayer(new ActivationLayer<float>(leakyRelu, leakyReluGradient));/**/
+	modeler.addLayer(new LinearLayer<float>(outputs));
+	output = modeler.getOutput();
+	modeler.init();
+	
+	int iter = 100000;
+	while (iter--)
+	{
+		input->fillRandom();
+		for (int i = 0; i < outputs; i++)
+			(*target)(0, i) = (*input)(0, 0) * (i * -1.5 + 0.4) + (*input)(0, 1) * (i * 0.3 - 1.1) - 0.7 + ((*input)(0, 0) > 0) * 1.3;
 
-	//Matrix<float> expected(1, outputs);
-	//Matrix<float> outputActivatedGradient(1, outputs);
-	//Matrix<float> outputGradient(1, outputs);
-	//Matrix<float> weightsGradient(inputs, outputs);
+		modeler.forward();
+		modeler.backward();
+		modeler.update(learningRate);
+	}
 
-	//int iter = 200;
-	//while (iter--)
-	//{
-	//	outputGradient.fill(0.0f);
-	//	weightsGradient.fill(0.0f);
-	//	for (int i = 0; i < batchSize; i++)
-	//	{
-	//		input.fillRandom();
-	//		output = input * weights + bias;
-	//		outputActivated = output;
-	//		outputActivated.apply(activation);
+	modeler.print();
 
-	//		for (int i = 0; i < outputs; i++)
-	//		{
-	//			expected(0, i) = input(0, 0) * (i * 0.2 - 0.3) - input(0, 1) * (i * 1.4 - 1.6) + i - 0.3;
-	//		}
-	//		expected.apply(activation);
-
-	//		/*
-	//		-0.3, -0.1, 0.1
-	//		1.6, 0.2, -1.2
-	//		-0.3, 0.7, 1.7
-	//		*/
-
-	//		outputActivatedGradient = expected - outputActivated;
-	//		outputGradient.addOn(activationGradient, output, outputActivatedGradient);
-
-	//		input.transpose();
-	//		weightsGradient += input * outputGradient;
-	//		input.transpose();
-
-	//		/*cout << "input:\n";
-	//		input.print();
-	//		cout << "weights:\n";
-	//		weights.print();
-	//		cout << "bias:\n";
-	//		bias.print();
-	//		cout << "output:\n";
-	//		output.print();*/
-	//		/*cout << "outputActivated:\n";
-	//		outputActivated.print();
-	//		cout << "expected:\n";
-	//		expected.print();*/
-	//		/*cout << "outputActivatedGradient:\n";
-	//		outputActivatedGradient.print();*/
-	//	}
-	//	weightsGradient *= invBatchSize * learningRate;
-	//	weights += weightsGradient;
-	//	outputGradient *= invBatchSize * learningRate;
-	//	bias += outputGradient;
-
-	//	/*cout << "outputGradient:\n";
-	//	outputGradient.print();
-	//	cout << "weightsGradient:\n";
-	//	weightsGradient.print();*/
-	//}
-
-	//cout << "weights:\n";
-	//weights.print();
-	//cout << "bias:\n";
-	//bias.print();
+	modeler.output->print();
+	target->print();
 
 	return 0;
 }

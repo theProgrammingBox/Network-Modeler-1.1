@@ -74,12 +74,12 @@ void LinearLayer<T>::backward()
 template <typename T>
 void LinearLayer<T>::update(T scalar)
 {
-	weightsGradient->times(scalar);
+	/*weightsGradient->times(scalar);
 	this->outputGradient->times(scalar);
 	weightsGradient->clamp(-1.0f, 1.0f);
-	this->outputGradient->clamp(-1.0f, 1.0f);
-	weights->add(weightsGradient);
-	bias->add(this->outputGradient);
+	this->outputGradient->clamp(-1.0f, 1.0f);*/
+	weights->add(weightsGradient, scalar, -1.0f, 1.0f);
+	bias->add(this->outputGradient, scalar, -1.0f, 1.0f);
 }
 
 template <typename T>
